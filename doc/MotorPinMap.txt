@@ -1,12 +1,12 @@
 L298N             			马达   SOC Enable PIN       SOC Control GPIO
 
-前边OUT3/OUT4/调速端A		前左   PIN15                PIN31/PIN33
+前边OUT3/OUT4/调速端A		前左   PIN29                PIN31/PIN33
 
 
-前边OUT1/OUT2/调速端B		前右   PIN29                PIN35/PIN37
+前边OUT1/OUT2/调速端B		前右   PIN15                PIN35/PIN37
 
 								
-后边OUT1/OUT2/调速端B		后左   PIN18                PIN38/PIN40
+后边OUT1/OUT2/调速端B		后左   PIN25                PIN38/PIN40
 
 
-后边OUT3/OUT4/调速端A		后右   PIN25                PIN36/PIN32
+后边OUT3/OUT4/调速端A		后右   PIN18                PIN36/PIN32

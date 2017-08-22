@@ -5,10 +5,10 @@ import time
 '''
 2 L298N control 4 Motors. 
 SOC Control GPIO
-Front Motor: (Left) 15-ENDA, 31-forward,33-backward   
-             (Right)29-ENDB, 35-forward,37-backward
-Rear Motor:  (Left) 18-ENDB, 38-forward,40-backward
-             (Right)22-ENDA, 36-forward,32-backward   
+Front Motor: (Left) 29-ENDA, 33-forward,31-backward   
+             (Right)15-ENDB, 37-forward,35-backward
+Rear Motor:  (Left) 22-ENDB, 40-forward,38-backward
+             (Right)18-ENDA, 36-forward,32-backward   
 
 This is temporary test codes, need define a wheels class.
 '''
