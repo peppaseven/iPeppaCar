@@ -8,7 +8,7 @@ SOC Control GPIO
 Front Motor: (Left) 15-ENDA, 31-forward,33-backward   
              (Right)29-ENDB, 35-forward,37-backward
 Rear Motor:  (Left) 18-ENDB, 38-forward,40-backward
-             (Right)25-ENDA, 36-forward,32-backward   
+             (Right)22-ENDA, 36-forward,32-backward   
 
 This is temporary test codes, need define a wheels class.
 '''
@@ -26,7 +26,7 @@ def init():
     GPIO.setup(18, GPIO.OUT)
     GPIO.setup(38, GPIO.OUT)
     GPIO.setup(40, GPIO.OUT)
-    GPIO.setup(25, GPIO.OUT)
+    GPIO.setup(22, GPIO.OUT)
     GPIO.setup(36, GPIO.OUT)
     GPIO.setup(32, GPIO.OUT)
 
@@ -41,51 +41,51 @@ def reset():
     GPIO.output(18, GPIO.LOW)
     GPIO.output(38, GPIO.LOW)
     GPIO.output(40, GPIO.LOW)
-    GPIO.output(25, GPIO.LOW)
+    GPIO.output(22, GPIO.LOW)
     GPIO.output(36, GPIO.LOW)
     GPIO.output(32, GPIO.LOW)
 
 
 # front left forward
 def front_left_forward():
-    GPIO.output(15, GPIO.HIGH)
-    GPIO.output(31, GPIO.HIGH)
-    GPIO.output(33, GPIO.LOW)
+    GPIO.output(29, GPIO.HIGH)
+    GPIO.output(31, GPIO.LOW)
+    GPIO.output(33, GPIO.HIGH)
 # front right forward
 def front_right_forward():
-    GPIO.output(29, GPIO.HIGH)
-    GPIO.output(35, GPIO.HIGH)
-    GPIO.output(37, GPIO.LOW)
+    GPIO.output(15, GPIO.HIGH)
+    GPIO.output(35, GPIO.LOW)
+    GPIO.output(37, GPIO.HIGH)
 
 # rear left forward
 def rear_left_forward():
-    GPIO.output(18, GPIO.HIGH)
-    GPIO.output(38, GPIO.HIGH)
-    GPIO.output(40, GPIO.LOW)
+    GPIO.output(22, GPIO.HIGH)
+    GPIO.output(38, GPIO.LOW)
+    GPIO.output(40, GPIO.HIGH)
 
 # rear right forward
 def rear_right_forward():
-    GPIO.output(25, GPIO.HIGH)
+    GPIO.output(18, GPIO.HIGH)
     GPIO.output(36, GPIO.HIGH)
     GPIO.output(32, GPIO.LOW)
 
 def front_left_back():
-    GPIO.output(15, GPIO.HIGH)
-    GPIO.output(31, GPIO.LOW)
-    GPIO.output(33, GPIO.HIGH)
+    GPIO.output(29, GPIO.HIGH)
+    GPIO.output(31, GPIO.HIGH)
+    GPIO.output(33, GPIO.LOW)
 
 def front_right_back():
-    GPIO.output(29, GPIO.HIGH)
-    GPIO.output(35, GPIO.LOW)
-    GPIO.output(37, GPIO.HIGH)
+    GPIO.output(15, GPIO.HIGH)
+    GPIO.output(35, GPIO.HIGH)
+    GPIO.output(37, GPIO.LOW)
 
 def rear_left_back():
-    GPIO.output(18, GPIO.HIGH)
-    GPIO.output(38, GPIO.LOW)
-    GPIO.output(40, GPIO.HIGH)
+    GPIO.output(22, GPIO.HIGH)
+    GPIO.output(38, GPIO.HIGH)
+    GPIO.output(40, GPIO.LOW)
 
 def rear_right_back():
-    GPIO.output(25, GPIO.HIGH)
+    GPIO.output(18, GPIO.HIGH)
     GPIO.output(36, GPIO.LOW)
     GPIO.output(32, GPIO.HIGH)
 
@@ -144,15 +144,15 @@ if __name__ == "__main__":
     reset()
     forward()
     time.sleep(2)
-    #back()
-    #time.sleep(2)
-    #front_left_turn()
-    #time.sleep(1)
-    #front_right_turn()
-    #time.sleep(1)
-    #rear_left_turn()
-    #time.sleep(1)
-    #rear_right_turn()
+    back()
+    time.sleep(2)
+    front_left_turn()
+    time.sleep(2)
+    front_right_turn()
+    time.sleep(2)
+    rear_left_turn()
+    time.sleep(1)
+    rear_right_turn()
     stop()
     #must call this when exit
     GPIO.cleanup()
