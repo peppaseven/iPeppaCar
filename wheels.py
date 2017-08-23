@@ -5,7 +5,7 @@ import time
 '''
 2 L298N control 4 Motors. 
 SOC Control GPIO
-Front Motor: (Left) 29-ENDA, 33-forward,31-backward   
+Front Motor: (Left) 13-ENDA, 33-forward,31-backward   
              (Right)15-ENDB, 37-forward,35-backward
 Rear Motor:  (Left) 22-ENDB, 40-forward,38-backward
              (Right)18-ENDA, 36-forward,32-backward   
@@ -19,7 +19,7 @@ def init():
     GPIO.setup(15, GPIO.OUT)
     GPIO.setup(31, GPIO.OUT)
     GPIO.setup(33, GPIO.OUT)
-    GPIO.setup(29, GPIO.OUT)
+    GPIO.setup(13, GPIO.OUT)
     GPIO.setup(35, GPIO.OUT)
     GPIO.setup(37, GPIO.OUT)
 
@@ -34,7 +34,7 @@ def reset():
     GPIO.output(15, GPIO.LOW)
     GPIO.output(31, GPIO.LOW)
     GPIO.output(33, GPIO.LOW)
-    GPIO.output(29, GPIO.LOW)
+    GPIO.output(13, GPIO.LOW)
     GPIO.output(35, GPIO.LOW)
     GPIO.output(37, GPIO.LOW)
 
@@ -48,7 +48,7 @@ def reset():
 
 # front left forward
 def front_left_forward():
-    GPIO.output(29, GPIO.HIGH)
+    GPIO.output(13, GPIO.HIGH)
     GPIO.output(31, GPIO.LOW)
     GPIO.output(33, GPIO.HIGH)
 # front right forward
@@ -70,7 +70,7 @@ def rear_right_forward():
     GPIO.output(32, GPIO.LOW)
 
 def front_left_back():
-    GPIO.output(29, GPIO.HIGH)
+    GPIO.output(13, GPIO.HIGH)
     GPIO.output(31, GPIO.HIGH)
     GPIO.output(33, GPIO.LOW)
 
