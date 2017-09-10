@@ -1,0 +1,17 @@
+{
+	"show_video": true,
+	"webcam_ip": "127.0.0.1:20081",
+	"webcam_user": "peter",
+	"webcam_pwd": "hitv",
+	"webcam_num": 0,
+	"webcam_query_interval": 0.05,
+	"speak_result":false,
+	"use_baiducloud": false,
+	"baiducloud_access_token": "YOUR_BAIDUCLOUD_KEY",
+	"baiducloud_base_path": "YOUR_BAIDUCLOUD_PATH",
+	"min_upload_seconds": 3.0,
+	"min_motion_frames": 8,
+	"delta_thresh": 5,
+	"resolution": [640, 480],
+	"min_area": 5000
+}
