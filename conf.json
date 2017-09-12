@@ -6,6 +6,7 @@
 	"webcam_num": 0,
 	"webcam_query_interval": 0.05,
 	"speak_result":false,
+	"tf_classify_server": "192.168.50.68:30000",
 	"use_baiducloud": false,
 	"baiducloud_access_token": "YOUR_BAIDUCLOUD_KEY",
 	"baiducloud_base_path": "YOUR_BAIDUCLOUD_PATH",

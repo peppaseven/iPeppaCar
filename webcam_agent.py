@@ -4,15 +4,27 @@ import time
 import argparse
 import multiprocessing
 import numpy as np
+import requests
 import json
 import io
 from PIL import Image
 from utils.webcam_utils import MJPEGWebcamVideoStream
 from multiprocessing import Queue, Pool
-
+from utils.tempimage import TempImage
 CWD_PATH = os.getcwd()
 
-def detect_objects(image_np,conf):
+def detect_objects(image_np, conf):
+
+    # write the image to temporary file
+    t = TempImage()
+    cv2.imwrite(t.path, image_np)
+    tf_server_ip = conf["tf_classify_server"]
+    tf_classify_url = 'http://{ip}/classify_image'.format(ip=tf_server_ip)
+    imagefile = {'imagefile': open(t.path, 'rb')}
+    resp = requests.post(tf_classify_url, files=imagefile)
+    if resp.json()['has_result']:
+        print(resp.json()['name'])
+    t.cleanup()
 
     return image_np
 
