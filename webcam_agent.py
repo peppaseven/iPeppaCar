@@ -11,10 +11,10 @@ from PIL import Image
 from utils.webcam_utils import MJPEGWebcamVideoStream
 from multiprocessing import Queue, Pool
 from utils.tempimage import TempImage
+from utils.tts import BaiduTTS
 CWD_PATH = os.getcwd()
 
 def detect_objects(image_np, conf):
-
     # write the image to temporary file
     t = TempImage()
     cv2.imwrite(t.path, image_np)
@@ -22,16 +22,17 @@ def detect_objects(image_np, conf):
     tf_classify_url = 'http://{ip}/classify_image'.format(ip=tf_server_ip)
     imagefile = {'imagefile': open(t.path, 'rb')}
     resp = requests.post(tf_classify_url, files=imagefile)
+    t.cleanup()
     if resp.json()['has_result']:
         print(resp.json()['name'])
         cv2.putText(image_np, "Object is: {}".format(resp.json()['name']), (10, 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-    t.cleanup()
 
-    return image_np
+    return image_np,resp.json()['has_result'],resp.json()['name']
 
 
 def worker(input_q, output_q,conf):
+    object_name = ''
     while True:
         image_bytes = input_q.get()
         data_stream = io.BytesIO(image_bytes)
@@ -39,7 +40,19 @@ def worker(input_q, output_q,conf):
         pil_image = Image.open(data_stream).convert('RGB')
         pil_image_resized = pil_image.resize((320,240), Image.ANTIALIAS)
         np_frame = np.array(pil_image_resized)
-        output_q.put(detect_objects(np_frame,conf))
+
+        image_np,result,label_name=detect_objects(np_frame,conf)
+        if result:
+            if not (object_name == label_name):
+                object_name = label_name
+                if conf["speak_result"]:
+                    print('speak object: %s' %(object_name))
+                    api_key = conf["baidu_tts_apikey"]
+                    secret_key = conf["baidu_tts_secretkey"]
+                    tts = BaiduTTS(api_key, secret_key)
+                    tts.say(object_name)
+
+        output_q.put(image_np)
 
 def agent_start(num_workers,queue_size,conf_path):
 
