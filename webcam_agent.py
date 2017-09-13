@@ -24,6 +24,8 @@ def detect_objects(image_np, conf):
     resp = requests.post(tf_classify_url, files=imagefile)
     if resp.json()['has_result']:
         print(resp.json()['name'])
+        cv2.putText(image_np, "Object is: {}".format(resp.json()['name']), (10, 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     t.cleanup()
 
     return image_np
@@ -61,18 +63,21 @@ def agent_start(num_workers,queue_size,conf_path):
 
     while True:  # fps._numFrames < 120
         frame = video_capture.read()
+
+        # check moving object,then put it to input queue
         input_q.put(frame)
 
-        frame = output_q.get()
 
         # check to see if the frames should be displayed to screen
         if conf["show_video"]:
+            frame = output_q.get()
             # display the security feed
             cv2.imshow("Video", frame)
-            key = cv2.waitKey(1) & 0xFF
-            # if the `q` key is pressed, break from the lop
-            if key == ord("q"):
-                break
+
+        key = cv2.waitKey(1) & 0xFF
+        # if the `q` key is pressed, break from the lop
+        if key == ord("q"):
+            break
 
     pool.terminate()
     video_capture.stop()
