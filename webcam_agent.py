@@ -34,10 +34,8 @@ def detect_objects(image_np, conf):
 def worker(input_q, output_q,conf):
     object_name = ''
     while True:
-        image_bytes = input_q.get()
-        data_stream = io.BytesIO(image_bytes)
-        # open as a PIL image object
-        pil_image = Image.open(data_stream).convert('RGB')
+        image_in = input_q.get()
+        pil_image = Image.fromarray(image_in,Image.RGB)
         pil_image_resized = pil_image.resize((320,240), Image.ANTIALIAS)
         np_frame = np.array(pil_image_resized)
 
@@ -74,11 +72,53 @@ def agent_start(num_workers,queue_size,conf_path):
     #print('ip:{ip},username:{username}'.format(ip=ip,username=username))
     video_capture = MJPEGWebcamVideoStream(ip,username,passwd,which_cam,interval).start()
 
+    # initialize the first frame in the video stream
+    first_frame = None
     while True:  # fps._numFrames < 120
         frame = video_capture.read()
 
-        # check moving object,then put it to input queue
-        input_q.put(frame)
+        if conf["use_moving_detection"]:
+            data_stream = io.BytesIO(frame)
+            # open as a PIL image object
+            pil_image = Image.open(data_stream).convert('RGB')
+            np_frame = np.array(pil_image)
+            gray = cv2.cvtColor(np_frame, cv2.COLOR_RGB2GRAY)
+            gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+            # if the first frame is None, initialize it
+            if first_frame is None:
+                first_frame = gray
+                continue
+            # compute the absolute difference between the current frame and
+            # first frame
+            frameDelta = cv2.absdiff(first_frame, gray)
+            thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+
+            # dilate the thresholded image to fill in holes, then find contours
+            # on thresholded image
+            thresh = cv2.dilate(thresh, None, iterations=2)
+            (_, cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                                            cv2.CHAIN_APPROX_SIMPLE)
+            # loop over the contours
+            for c in cnts:
+                # if the contour is too small, ignore it
+                if cv2.contourArea(c) < args["min_area"]:
+                    continue
+
+                # compute the bounding box for the contour, draw it on the frame,
+                # and update the text
+                (x, y, w, h) = cv2.boundingRect(c)
+                print("Rect:x-{},y-{},w-{},h-{}".format(x,y,w,h))
+                input_q.put(np_frame)
+                break
+
+        else:
+            data_stream = io.BytesIO(frame)
+            # open as a PIL image object
+            pil_image = Image.open(data_stream).convert('RGB')
+            np_frame = np.array(pil_image)
+            # check moving object,then put it to input queue
+            input_q.put(np_frame)
 
 
         # check to see if the frames should be displayed to screen
