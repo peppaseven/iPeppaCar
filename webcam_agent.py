@@ -16,6 +16,10 @@ CWD_PATH = os.getcwd()
 
 def detect_objects(image_np, conf):
     # write the image to temporary file
+    pil_image = Image.fromarray(image_np)
+    pil_image_resized = pil_image.resize((320, 240), Image.ANTIALIAS)
+    np_frame = np.array(pil_image_resized)
+
     t = TempImage()
     cv2.imwrite(t.path, image_np)
     tf_server_ip = conf["tf_classify_server"]
@@ -26,7 +30,7 @@ def detect_objects(image_np, conf):
     if resp.json()['has_result']:
         print(resp.json()['name'])
         cv2.putText(image_np, "Object is: {}".format(resp.json()['name']), (10, 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
 
     return image_np,resp.json()['has_result'],resp.json()['name']
 
@@ -34,11 +38,7 @@ def detect_objects(image_np, conf):
 def worker(input_q, output_q,conf):
     object_name = ''
     while True:
-        image_in = input_q.get()
-        pil_image = Image.fromarray(image_in,Image.RGB)
-        pil_image_resized = pil_image.resize((320,240), Image.ANTIALIAS)
-        np_frame = np.array(pil_image_resized)
-
+        np_frame = input_q.get()
         image_np,result,label_name=detect_objects(np_frame,conf)
         if result:
             if not (object_name == label_name):
@@ -125,7 +125,8 @@ def agent_start(num_workers,queue_size,conf_path):
         if conf["show_video"]:
             frame = output_q.get()
             # display the security feed
-            cv2.imshow("Video", frame)
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            cv2.imshow("Object Detector", frame)
 
         key = cv2.waitKey(1) & 0xFF
         # if the `q` key is pressed, break from the lop
