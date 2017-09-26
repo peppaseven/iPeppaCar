@@ -21,7 +21,7 @@ def detect_objects(image_np, conf):
     np_frame = np.array(pil_image_resized)
 
     t = TempImage()
-    cv2.imwrite(t.path, image_np)
+    cv2.imwrite(t.path, np_frame)
     tf_server_ip = conf["tf_classify_server"]
     tf_classify_url = 'http://{ip}/classify_image'.format(ip=tf_server_ip)
     imagefile = {'imagefile': open(t.path, 'rb')}
@@ -30,27 +30,31 @@ def detect_objects(image_np, conf):
     if resp.json()['has_result']:
         print(resp.json()['name'])
         cv2.putText(image_np, "Object is: {}".format(resp.json()['name']), (10, 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
 
     return image_np,resp.json()['has_result'],resp.json()['name']
 
 
 def worker(input_q, output_q,conf):
     object_name = ''
-    while True:
-        np_frame = input_q.get()
-        image_np,result,label_name=detect_objects(np_frame,conf)
-        if result:
-            if not (object_name == label_name):
-                object_name = label_name
-                if conf["speak_result"]:
-                    print('speak object: %s' %(object_name))
-                    api_key = conf["baidu_tts_apikey"]
-                    secret_key = conf["baidu_tts_secretkey"]
-                    tts = BaiduTTS(api_key, secret_key)
-                    tts.say(object_name)
+    try:
+        while True:
+            np_frame = input_q.get()
+            image_np,result,label_name=detect_objects(np_frame,conf)
+            if result:
+                if not (object_name == label_name):
+                    object_name = label_name
+                    if conf["speak_result"]:
+                        print('speak object: %s' %(object_name))
+                        api_key = conf["baidu_tts_apikey"]
+                        secret_key = conf["baidu_tts_secretkey"]
+                        tts = BaiduTTS(api_key, secret_key)
+                        tts.say(object_name)
 
-        output_q.put(image_np)
+            output_q.put(image_np)
+            time.sleep(0.01)
+    except KeyboardInterrupt:
+        print('Child exit,parent received ctrl-c')
 
 def agent_start(num_workers,queue_size,conf_path):
 
@@ -74,65 +78,72 @@ def agent_start(num_workers,queue_size,conf_path):
 
     # initialize the first frame in the video stream
     first_frame = None
-    while True:  # fps._numFrames < 120
-        frame = video_capture.read()
+    try:
+        while True:  # fps._numFrames < 120
+            frame = video_capture.read()
 
-        if conf["use_moving_detection"]:
-            data_stream = io.BytesIO(frame)
-            # open as a PIL image object
-            pil_image = Image.open(data_stream).convert('RGB')
-            np_frame = np.array(pil_image)
-            gray = cv2.cvtColor(np_frame, cv2.COLOR_RGB2GRAY)
-            gray = cv2.GaussianBlur(gray, (21, 21), 0)
+            if conf["use_moving_detection"]:
+                data_stream = io.BytesIO(frame)
+                # open as a PIL image object
+                pil_image = Image.open(data_stream).convert('RGB')
+                np_frame = np.array(pil_image)
+                gray = cv2.cvtColor(np_frame, cv2.COLOR_RGB2GRAY)
+                gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
-            # if the first frame is None, initialize it
-            if first_frame is None:
-                first_frame = gray
-                continue
-            # compute the absolute difference between the current frame and
-            # first frame
-            frameDelta = cv2.absdiff(first_frame, gray)
-            thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
-
-            # dilate the thresholded image to fill in holes, then find contours
-            # on thresholded image
-            thresh = cv2.dilate(thresh, None, iterations=2)
-            (_, cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-                                            cv2.CHAIN_APPROX_SIMPLE)
-            # loop over the contours
-            for c in cnts:
-                # if the contour is too small, ignore it
-                if cv2.contourArea(c) < args["min_area"]:
+                # if the first frame is None, initialize it
+                if first_frame is None:
+                    input_q.put(np_frame)
+                    first_frame = gray
                     continue
+                # compute the absolute difference between the current frame and
+                # first frame
+                frameDelta = cv2.absdiff(first_frame, gray)
+                #print(frameDelta)
+                thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
 
-                # compute the bounding box for the contour, draw it on the frame,
-                # and update the text
-                (x, y, w, h) = cv2.boundingRect(c)
-                print("Rect:x-{},y-{},w-{},h-{}".format(x,y,w,h))
+                # dilate the thresholded image to fill in holes, then find contours
+                # on thresholded image
+                thresh = cv2.dilate(thresh, None, iterations=2)
+                (_, cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                                                cv2.CHAIN_APPROX_SIMPLE)
+                # loop over the contours
+                is_new_obj = False
+                for c in cnts:
+                    # if the contour is too small, ignore it
+                    if cv2.contourArea(c) < conf["min_area"]:
+                        continue
+
+                    # compute the bounding box for the contour, draw it on the frame,
+                    # and update the text
+                    (x, y, w, h) = cv2.boundingRect(c)
+                    #print("Rect:x-{},y-{},w-{},h-{}".format(x,y,w,h))
+                    is_new_obj = True
+                if is_new_obj:
+                    input_q.put(np_frame)
+
+            else:
+                data_stream = io.BytesIO(frame)
+                # open as a PIL image object
+                pil_image = Image.open(data_stream).convert('RGB')
+                np_frame = np.array(pil_image)
+                # check moving object,then put it to input queue
                 input_q.put(np_frame)
+
+
+            # check to see if the frames should be displayed to screen
+            if conf["show_video"]:
+                frame = output_q.get()
+                # display the security feed
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                cv2.imshow("Object Detector", frame)
+
+            key = cv2.waitKey(1) & 0xFF
+            # if the `q` key is pressed, break from the lop
+            if key == ord("q"):
                 break
 
-        else:
-            data_stream = io.BytesIO(frame)
-            # open as a PIL image object
-            pil_image = Image.open(data_stream).convert('RGB')
-            np_frame = np.array(pil_image)
-            # check moving object,then put it to input queue
-            input_q.put(np_frame)
-
-
-        # check to see if the frames should be displayed to screen
-        if conf["show_video"]:
-            frame = output_q.get()
-            # display the security feed
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            cv2.imshow("Object Detector", frame)
-
-        key = cv2.waitKey(1) & 0xFF
-        # if the `q` key is pressed, break from the lop
-        if key == ord("q"):
-            break
-
+    except KeyboardInterrupt:
+        print('parent received ctrl-c')
     pool.terminate()
     video_capture.stop()
     cv2.destroyAllWindows()
